@@ -2,11 +2,18 @@
 from flask import Flask, request, render_template
 import pickle
 import numpy as np
+import os
 
 app = Flask(__name__, template_folder="../templates")
 
-scaler = pickle.load(open("Model/standardScaler.pkl", "rb"))
-model = pickle.load(open("Model/modelForPrediction.pkl", "rb"))
+# Wrap model loading in try/except
+try:
+    scaler = pickle.load(open("Model/standardScaler.pkl", "rb"))
+    model = pickle.load(open("Model/modelForPrediction.pkl", "rb"))
+except Exception as e:
+    print(f"Error loading model files: {e}")
+    scaler = None
+    model = None
 
 @app.route('/', methods=['GET'])
 def home():
@@ -14,6 +21,10 @@ def home():
 
 @app.route('/predictdata', methods=['POST'])
 def predict_datapoint():
+    if not scaler or not model:
+        return render_template('single_prediction.html',
+                               error="Model files could not be loaded. Please check server logs.")
+
     try:
         Pregnancies = float(request.form.get('Pregnancies'))
         Glucose = float(request.form.get('Glucose'))
@@ -33,6 +44,9 @@ def predict_datapoint():
         return render_template('single_prediction.html',
                                result=result,
                                confidence=round(confidence, 2))
-    except:
+    except ValueError as ve:
         return render_template('single_prediction.html',
-                               error="Invalid input. Please enter numeric values only.")
+                               error=f"Invalid input: {ve}")
+    except Exception as e:
+        return render_template('single_prediction.html',
+                               error=f"Prediction failed: {e}")
