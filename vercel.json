@@ -6,9 +6,10 @@
     "api/predict.py": {
       "includeFiles": ["api/Model/**"]
     }
-  },
+  ],
   "routes": [
     { "src": "/", "dest": "api/predict.py" },
+    { "src": "/form", "dest": "api/predict.py" },
     { "src": "/predictdata", "dest": "api/predict.py" }
   ]
 }
