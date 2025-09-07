@@ -4,12 +4,14 @@ import pickle
 import numpy as np
 import os
 
-app = Flask(__name__, template_folder="../templates")
+app = Flask(__name__, template_folder="templates")
 
 # Wrap model loading in try/except
 try:
-    scaler = pickle.load(open("Model/standardScaler.pkl", "rb"))
-    model = pickle.load(open("Model/modelForPrediction.pkl", "rb"))
+    model_dir = os.path.join(os.path.dirname(__file__), "Model")
+    scaler = pickle.load(open(os.path.join(model_dir, "standardScaler.pkl"), "rb"))
+    model = pickle.load(open(os.path.join(model_dir, "modelForPrediction.pkl"), "rb"))
+
 except Exception as e:
     print(f"Error loading model files: {e}")
     scaler = None
@@ -50,3 +52,4 @@ def predict_datapoint():
     except Exception as e:
         return render_template('single_prediction.html',
                                error=f"Prediction failed: {e}")
+
