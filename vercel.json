@@ -1,14 +1,14 @@
 {
   "builds": [
-    { "src": "api/app.py", "use": "@vercel/python" }
+    { "src": "api/predict.py", "use": "@vercel/python" }
   ],
   "functions": {
-    "api/app.py": {
+    "api/predict.py": {
       "includeFiles": ["api/Model/**"]
     }
   },
   "routes": [
-    { "src": "/", "dest": "api/app.py" },
-    { "src": "/predictdata", "dest": "api/app.py" }
+    { "src": "/", "dest": "api/predict.py" },
+    { "src": "/predictdata", "dest": "api/predict.py" }
   ]
 }
