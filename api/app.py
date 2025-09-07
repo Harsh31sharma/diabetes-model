@@ -15,14 +15,9 @@ with open(model_path, "rb") as f:
 with open(scaler_path, "rb") as f:
     scaler = pickle.load(f)
 
-@app.route("/")
+@app.route('/', methods=['GET'])
 def home():
-    return render_template("index.html")
-
-@app.route("/form", methods=["GET"])
-def form():
-    return render_template("predict.html")
-    
+    return render_template('index.html')    
 
 @app.route("/predictdata", methods=["POST"])
 def predict():
@@ -45,4 +40,5 @@ def predict():
         return jsonify({"prediction": result})
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
 
