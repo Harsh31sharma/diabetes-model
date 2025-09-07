@@ -7,3 +7,14 @@
     { "src": "/predictdata", "dest": "api/app.py" }
   ]
 }
+{
+  "functions": {
+    "api/app.py": {
+      "includeFiles": ["../Model/**"]
+    }
+  },
+  "routes": [
+    { "src": "/(.*)", "dest": "api/app.py" }
+  ]
+}
+
