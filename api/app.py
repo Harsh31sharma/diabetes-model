@@ -1,44 +1,54 @@
-# api/predict.py
-from flask import Flask, request, render_template
+import os
 import pickle
 import numpy as np
+from flask import Flask, request, render_template
 
 app = Flask(__name__, template_folder="../templates")
 
-model_path = os.path.join(os.path.dirname(__file__), "Model", "modelForPrediction.pkl")
-scaler_path = os.path.join(os.path.dirname(__file__), "Model", "standardScaler.pkl")
+# Paths to your serialized artifacts
+BASE_DIR   = os.path.dirname(__file__)
+MODEL_DIR  = os.path.join(BASE_DIR, "Model")
+model_path = os.path.join(MODEL_DIR, "modelForPrediction.pkl")
+scaler_path= os.path.join(MODEL_DIR, "standardScaler.pkl")
 
-with open(model_path, "rb") as f:
-    model = pickle.load(f)
+# Load model and scaler with error logging
+try:
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+    with open(scaler_path, "rb") as f:
+        scaler = pickle.load(f)
+except Exception as e:
+    app.logger.error(f"Failed to load model/scaler: {e}")
+    raise
 
-with open(scaler_path, "rb") as f:
-    scaler = pickle.load(f)
-
-@app.route('/', methods=['GET'])
+@app.route("/", methods=["GET"])
 def home():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/predictdata', methods=['POST'])
+@app.route("/predictdata", methods=["POST"])
 def predict_datapoint():
     try:
-        Pregnancies = float(request.form.get('Pregnancies'))
-        Glucose = float(request.form.get('Glucose'))
-        BloodPressure = float(request.form.get('BloodPressure'))
-        SkinThickness = float(request.form.get('SkinThickness'))
-        Insulin = float(request.form.get('Insulin'))
-        BMI = float(request.form.get('BMI'))
-        DiabetesPedigreeFunction = float(request.form.get('DiabetesPedigreeFunction'))
-        Age = float(request.form.get('Age'))
+        # Collect and scale inputs
+        keys   = [
+            "Pregnancies","Glucose","BloodPressure","SkinThickness",
+            "Insulin","BMI","DiabetesPedigreeFunction","Age"
+        ]
+        values = [float(request.form.get(k, 0)) for k in keys]
+        data   = scaler.transform([values])
 
-        new_data = scaler.transform([[Pregnancies, Glucose, BloodPressure, SkinThickness,
-                                      Insulin, BMI, DiabetesPedigreeFunction, Age]])
-        prediction = model.predict(new_data)[0]
-        confidence = model.predict_proba(new_data)[0][1] * 100
+        # Predict and calculate confidence
+        pred = model.predict(data)[0]
+        conf = model.predict_proba(data)[0][1] * 100
 
-        result = "Diabetic" if prediction == 1 else "Non-Diabetic"
-        return render_template('single_prediction.html',
-                               result=result,
-                               confidence=round(confidence, 2))
-    except:
-        return render_template('single_prediction.html',
-                               error="Invalid input. Please enter numeric values only.")
+        result = "Diabetic" if pred == 1 else "Non-Diabetic"
+        return render_template(
+            "single_prediction.html",
+            result=result,
+            confidence=round(conf, 2)
+        )
+    except Exception as e:
+        app.logger.error(f"Prediction error: {e}")
+        return render_template(
+            "single_prediction.html",
+            error="Invalid input or server error."
+        ), 500
